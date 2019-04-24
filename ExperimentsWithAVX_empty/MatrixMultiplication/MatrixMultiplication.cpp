@@ -3,6 +3,9 @@
 #include "Matrix.hpp"
 #include <chrono>
 
+#ifdef BENCHMARK_ALLOW
+#include <benchmark/benchmark.h>
+#endif
 
 using namespace std;
 
@@ -39,15 +42,25 @@ void printMatrix(std::string const& s, Matrix<float, ROW, COL>const& m) {
 }
 
 /* Computes matrix mult without optimization. Assumes res is zeroed */
-void multMatrix(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
-    // TODO: implement
+Matrix<float, ROWS1, COLS2> multMatrix(Matrix<float, ROWS1, COLS1> const& a, Matrix<float, ROWS2, COLS2> const& b) {
+    Matrix<float, ROWS1, COLS2> output;
+    
+    for (size_t i = 0; i < ROWS1; ++i) {
+        for (size_t j = 0; j < COLS2; ++j) {
+            for (size_t k = 0; k < COLS1; ++k) {
+                output(i, j) += a(i, k) * b(k, j);
+            }
+        }
+    }
+    
+    return output;
 }
 
 /* Computes matrix mult with SSE optimization. Assumes res is zeroed
 Goal: find the correct for loop to optimize!
 */
-void multMatrixSSE(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
-    // TODO: implement
+auto multMatrixSSE(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
+    return a*b;
  }
 
 /* Computes matrix mult with FMA optimization. Assumes res is zeroed */
@@ -59,36 +72,36 @@ void multMatrixFMA(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& 
 static void BM_basic(benchmark::State& state) {
     Matrix<float, ROWS1, COLS1> a;
     Matrix<float, ROWS2, COLS2> b;
-    initMatrix(mat1, mat2);
+    initMatrix(a, b);
     for (auto _ : state)
     {
-        multMatrix(a, b);
+        auto res = multMatrix(a, b);
         benchmark::DoNotOptimize(res);
     }
 }
 static void BM_sse(benchmark::State& state) {
     Matrix<float, ROWS1, COLS1> a;
     Matrix<float, ROWS2, COLS2> b;
-    initMatrix(mat1, mat2);
+    initMatrix(a, b);
     for (auto _ : state)
     {
-        multMatrixSSE(a, b);
+        auto res = multMatrixSSE(a, b);
         benchmark::DoNotOptimize(res);
     }
 }
 static void BM_fma(benchmark::State& state) {
     Matrix<float, ROWS1, COLS1> a;
     Matrix<float, ROWS2, COLS2> b;
-    initMatrix(mat1, mat2);
+    initMatrix(a, b);
     for (auto _ : state)
     {
-        multMatrixFMA(a, b);
-        benchmark::DoNotOptimize(res);
+        //auto res = multMatrixFMA(a, b);
+        //benchmark::DoNotOptimize(res);
     }
 }
 BENCHMARK(BM_basic);
 BENCHMARK(BM_sse);
-BENCHMARK(BM_fma);
+//BENCHMARK(BM_fma);
 #endif
 
 #ifndef BENCHMARK_ALLOW
