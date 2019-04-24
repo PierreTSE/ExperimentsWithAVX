@@ -39,22 +39,57 @@ void printMatrix(std::string const& s, Matrix<float, ROW, COL>const& m) {
 }
 
 /* Computes matrix mult without optimization. Assumes res is zeroed */
-void multMatrix(float *mat1/*fr*irc*/, float *mat2/*irc*fc*/, float *res/*fr*fc*/, int finalRows, int intermRowsCols, int finalCols) {
+void multMatrix(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
     // TODO: implement
 }
 
 /* Computes matrix mult with SSE optimization. Assumes res is zeroed
 Goal: find the correct for loop to optimize!
 */
-void multMatrixSSE(float *mat1/*fr*irc*/, float *mat2/*irc*fc*/, float *res/*fr*fc*/, int finalRows, int intermRowsCols, int finalCols) {
+void multMatrixSSE(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
     // TODO: implement
  }
 
 /* Computes matrix mult with FMA optimization. Assumes res is zeroed */
-void multMatrixFMA(float *mat1/*fr*irc*/, float *mat2/*irc*fc*/, float *res/*fr*fc*/, int finalRows, int intermRowsCols, int finalCols) {
+void multMatrixFMA(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
     // TODO: implement
 }
 
+#ifdef BENCHMARK_ALLOW
+static void BM_basic(benchmark::State& state) {
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(mat1, mat2);
+    for (auto _ : state)
+    {
+        multMatrix(a, b);
+        benchmark::DoNotOptimize(res);
+    }
+}
+static void BM_sse(benchmark::State& state) {
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(mat1, mat2);
+    for (auto _ : state)
+    {
+        multMatrixSSE(a, b);
+        benchmark::DoNotOptimize(res);
+    }
+}
+static void BM_fma(benchmark::State& state) {
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(mat1, mat2);
+    for (auto _ : state)
+    {
+        multMatrixFMA(a, b);
+        benchmark::DoNotOptimize(res);
+    }
+}
+BENCHMARK(BM_basic);
+BENCHMARK(BM_sse);
+BENCHMARK(BM_fma);
+#endif
 
 #ifndef BENCHMARK_ALLOW
 int main()
@@ -70,8 +105,8 @@ int main()
     std::cout << "(" << (time2 - time1).count() << ")" << std::endl;
 
     // print initial matrices
-    printMatrix("MAT1", mat1);
-    printMatrix("MAT2", mat2);
+    //printMatrix("MAT1", mat1);
+    //printMatrix("MAT2", mat2);
     printMatrix("RESU", res);
 
   return 0;
