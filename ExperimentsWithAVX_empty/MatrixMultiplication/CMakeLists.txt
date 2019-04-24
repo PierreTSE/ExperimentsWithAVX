@@ -1,5 +1,5 @@
 add_executable(multiply MatrixMultiplication.cpp Matrix.hpp test_macro.hpp)
-target_compile_options(multiply PUBLIC -mavx2)
+target_compile_options(multiply PUBLIC -mfma)
 
 find_package(benchmark)
 target_compile_definitions(multiply PUBLIC -DBENCHMARK_ALLOW)
