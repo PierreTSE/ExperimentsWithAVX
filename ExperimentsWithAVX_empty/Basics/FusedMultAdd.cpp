@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <immintrin.h>
+#include <chrono>
 
 using namespace std;
 
@@ -29,8 +30,8 @@ void fma(float a[4], float b[4], float c[4], float res[4]) {
 }
 
 /* displays the results & their timing */
-void printRes(string title, float res[4]/*, time_point time1, time_point time2*/) {
-    cout << title /*<< " (" << (time2 - time1).count() << "): " */<< res[0] << " " << res[1] << " " << res[2] << " " << res[3] << endl;
+void printRes(string title, float res[4], chrono::high_resolution_clock::time_point time1, chrono::high_resolution_clock::time_point time2) {
+    cout << title << " (" << (time2 - time1).count() << "): " << res[0] << " " << res[1] << " " << res[2] << " " << res[3] << endl;
 }
 
 int main() {
@@ -40,19 +41,22 @@ int main() {
     alignas(16) float res[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
  
     //// Basic
+    auto time1 = std::chrono::high_resolution_clock::now();
     basic(a, b, c, res);
-    printRes("BAS", res/*, time1, time2*/);
-    // TODO: add timing
+    auto time2 = std::chrono::high_resolution_clock::now();
+    printRes("BAS", res, time1, time2);
 
     ////// SSE
+    time1 = std::chrono::high_resolution_clock::now();
     sse(a, b, c, res);
-    printRes("SSE", res/*, time1, time2*/);
-    // TODO: add timing
+    time2 = std::chrono::high_resolution_clock::now();
+    printRes("SSE", res, time1, time2);
 
     /////// FMA
+    time1 = std::chrono::high_resolution_clock::now();
     fma(a, b, c, res);
-    printRes("FMA", res/*, time1, time2*/);
-    // TODO: add timing
+    time2 = std::chrono::high_resolution_clock::now();
+    printRes("FMA", res, time1, time2);
 
     return 0;
 }

@@ -1,3 +1,6 @@
 .idea
 cmake-build-debug
 *.zip
+
+v15
+x64
