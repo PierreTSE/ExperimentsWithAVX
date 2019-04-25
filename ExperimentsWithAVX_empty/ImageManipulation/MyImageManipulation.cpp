@@ -3,6 +3,19 @@
 MyImageManipulation::MyImageManipulation() : ImageManipulation() {
 }
 
+MyImageManipulation::MyImageManipulation(std::string const& src, std::string const& dest)
+{
+    bool ok = setImageSrc(src);
+    ok = setImageDest(dest);
+    if(ok)
+        backupSrcImage();
+}
+
+MyImageManipulation MyImageManipulation::getInstance(std::string const& src, std::string const& dest)
+{
+    static MyImageManipulation manip(src, dest);
+}
+
 const int MyImageManipulation::MAX_TIMING_ITERATIONS = 4; // Nb of time each method is run when timing it
 
 long MyImageManipulation::timeMethod(void (MyImageManipulation::*methodToBeTimed)()) {

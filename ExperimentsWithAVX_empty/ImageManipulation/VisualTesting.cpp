@@ -1,5 +1,59 @@
 #include "MyImageManipulation.h"
 
+#ifdef BENCHMARK_ALLOW
+#include <benchmark/benchmark.h>
+#endif
+
+#ifdef PICOBENCHMARK_ALLOW
+#define PICOBENCH_IMPLEMENT_WITH_MAIN
+#include <picobench/picobench.hpp>
+const std::string srcImage  = "../big_image1.jpg";
+const std::string destImage = "../big_image2.jpg";  /* MUST BE OF THE SAME SIZE!!!!*/
+
+static void fillWithZero(picobench::state& state) {
+    auto manip = MyImageManipulation::getInstance(srcImage, destImage);
+    for (auto _ : state)
+    {
+        manip.fillWithZero();
+    }
+    manip.recoverSrcImage();
+}
+static void fillWithZeroOptimized(picobench::state& state) {
+    auto manip = MyImageManipulation::getInstance(srcImage, destImage);
+    for (auto _ : state)
+    {
+        manip.fillWithZeroOptimized();
+    }
+    manip.recoverSrcImage();
+}
+static void fillWithZeroSSE(picobench::state& state) {
+    auto manip = MyImageManipulation::getInstance(srcImage, destImage);
+    for (auto _ : state)
+    {
+        manip.fillWithZeroSSE();
+    }
+    manip.recoverSrcImage();
+}
+static void fillWithZeroAVX(picobench::state& state) {
+    auto manip = MyImageManipulation::getInstance(srcImage, destImage);
+    for (auto _ : state)
+    {
+        manip.fillWithZeroAVX();
+    }
+    manip.recoverSrcImage();
+}
+PICOBENCH_SUITE("Fill-Zero");
+PICOBENCH(fillWithZero);
+PICOBENCH(fillWithZeroOptimized);
+PICOBENCH(fillWithZeroSSE);
+PICOBENCH(fillWithZeroAVX);
+#endif
+
+
+#ifdef PICOBENCHMARK_ALLOW
+#elif defined(BENCHMARK_ALLOW)
+BENCHMARK_MAIN();
+#else
 int main(int argc, char** argv)
 {
     string srcImage  = "../big_image1.jpg";
@@ -14,22 +68,22 @@ int main(int argc, char** argv)
         //cout << ImageManipulation::MAX_CHANTYPE << endl;
         //cout << SCALE << endl;
 
-        manip.displayImage("ORIGINAL image");
+        //manip.displayImage("ORIGINAL image");
         manip.backupSrcImage();
 
         ////// Fill-Zero
 
-        //manip.fillWithZero();
-        //manip.displayImage("Normal Fill*0*");
-        //manip.recoverSrcImage();
-
-        //manip.fillWithZeroOptimized();
-        //manip.displayImage("Optimized Fill*0*");
-        //manip.recoverSrcImage();
-
-        //manip.fillWithZeroSSE();
-        //manip.displayImage("SSE Fill*0*");
-        //manip.recoverSrcImage();
+        manip.fillWithZero();
+        manip.displayImage("Normal Fill*0*");
+        manip.recoverSrcImage();
+        
+        manip.fillWithZeroOptimized();
+        manip.displayImage("Optimized Fill*0*");
+        manip.recoverSrcImage();
+        
+        manip.fillWithZeroSSE();
+        manip.displayImage("SSE Fill*0*");
+        manip.recoverSrcImage();
 
         //manip.fillWithZeroAVX();
         //manip.displayImage("AVX Fill*0*");
@@ -116,3 +170,4 @@ int main(int argc, char** argv)
 
 	return 0;
 }
+#endif

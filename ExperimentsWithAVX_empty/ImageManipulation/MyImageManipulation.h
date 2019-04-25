@@ -14,6 +14,8 @@ class MyImageManipulation : public ImageManipulation {
 
 public: 
     MyImageManipulation();
+    MyImageManipulation(std::string const& src, std::string const& dest);
+    static MyImageManipulation getInstance(std::string const& src, std::string const& dest);
 
     static const int MAX_TIMING_ITERATIONS;
 
