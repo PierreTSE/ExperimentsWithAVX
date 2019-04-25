@@ -1,14 +1,9 @@
 #ifndef __MY_IMAGE_MANIPULATION__
 #define __MY_IMAGE_MANIPULATION__
 
-#include <ctime>
-#include <ratio>
 #include <chrono>
 
 #include "ImageManipulation.h"
-
-using namespace std::chrono;
-
 
 class MyImageManipulation : public ImageManipulation {
 

@@ -1,4 +1,8 @@
 #include "MyImageManipulation.h"
+#include <chrono>
+#include <immintrin.h>
+
+using namespace std::chrono;
 
 MyImageManipulation::MyImageManipulation() : ImageManipulation() {
 }
@@ -14,6 +18,7 @@ MyImageManipulation::MyImageManipulation(std::string const& src, std::string con
 MyImageManipulation MyImageManipulation::getInstance(std::string const& src, std::string const& dest)
 {
     static MyImageManipulation manip(src, dest);
+    return manip;
 }
 
 const int MyImageManipulation::MAX_TIMING_ITERATIONS = 4; // Nb of time each method is run when timing it
@@ -44,11 +49,15 @@ long MyImageManipulation::timeMethod(void (MyImageManipulation::*methodToBeTimed
 //// Fill-Zero
 
 void MyImageManipulation::fillWithZero() {
-    //TODO: implement
+    _imageSrc = cv::Scalar(0);
 }
 
 void MyImageManipulation::fillWithZeroOptimized() {
-    //TODO: implement
+    auto ptr = _imageSrc.data;
+    while(ptr++ < _imageSrc.dataend)
+    {
+        *ptr = 0;
+    }
 }
 
 const int NB_CHANTYPE_IN_128 = 128 / (8 * sizeof(chanType));  // 4 floats = 4*(8*4Ui64) bits = 128 bits = 1 SSE register = 1 pixel

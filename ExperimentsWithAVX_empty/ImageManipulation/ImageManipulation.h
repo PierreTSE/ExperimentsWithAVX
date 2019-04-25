@@ -1,18 +1,12 @@
 #ifndef __IMAGE_MANIPULATION__
 #define __IMAGE_MANIPULATION__
 
-#include <iostream>
 #include <string>
 
 #include <opencv2/opencv.hpp>
 
-#include <immintrin.h>
-
-using namespace cv;
-using namespace std;
-
 typedef float chanType;
-typedef Vec4f pixelType;
+typedef cv::Vec4f pixelType;
 typedef __m128 sseType;
 typedef __m256 avxType;
 #define IMAGE_FORMAT CV_32FC4
@@ -26,9 +20,9 @@ public:
 
     ImageManipulation();
 
-	bool setImageSrc(string filename);
-	string getImageType(const Mat &img);
-	void displayImage(string title);
+	bool setImageSrc(std::string filename);
+    std::string getImageType(const cv::Mat &img);
+	void displayImage(std::string title);
 
     void backupSrcImage();
     void recoverSrcImage();
@@ -57,7 +51,7 @@ public:
 
 	///** Decreases pixels intensity towards the color of the same pixel in the other image */
     /** Both images MUST be of the SAME dimensions */
-    bool setImageDest(string filename);
+    bool setImageDest(std::string filename);
     virtual void fadeToImage() = 0;       // loop on pointers
     virtual void fadeToImageAVX() = 0;    // use AVX pointers
 
@@ -71,16 +65,16 @@ public:
 	//virtual void convoluteAVX(); // use AVX pointers
 
 protected:
-	Mat _imageSrc;  /*alignas(alignof(int))*/
-	Mat _imageSrcBackup;
-	Mat _imageDest;
+	cv::Mat _imageSrc;  /*alignas(alignof(int))*/
+	cv::Mat _imageSrcBackup;
+	cv::Mat _imageDest;
 	chanType _targetA, _targetR, _targetG, _targetB;
     chanType _alphaNum, _alphaDen;
 
-	string typeToString(int type);
-    bool setImage(Mat *imgDest, string filename);
-    void convertToTPFormat(Mat *Img);
-    void displayMinMax(const Mat &img);
+    std::string typeToString(int type);
+    bool setImage(cv::Mat *imgDest, std::string filename);
+    void convertToTPFormat(cv::Mat *Img);
+    void displayMinMax(const cv::Mat &img);
 };
 
 #endif

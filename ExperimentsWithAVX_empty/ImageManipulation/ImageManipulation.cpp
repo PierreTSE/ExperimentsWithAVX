@@ -1,5 +1,7 @@
 #include "ImageManipulation.h"
 
+using namespace std;
+
 // DONE : forced convertion of image to type that allows working with round number of pixels in each iteration of the loop
 // NOTE: accessing individual pixels can be done with : mat.at<pixelType/chanType>(r,c) or cv::mat.ptr<pixelType/chanType>(r,c)
 
@@ -11,9 +13,9 @@ ImageManipulation::ImageManipulation() {
 }
 
 /** Returns true if loading of image was OK, false otherwise. */
-bool ImageManipulation::setImage(Mat *imgDest, string filename) {
+bool ImageManipulation::setImage(cv::Mat *imgDest, string filename) {
     // Read the image file
-    *imgDest = imread(filename);
+    *imgDest = cv::imread(filename);
 
     if (_imageSrc.empty()) { // Check for failure
         cerr << "Could not open or find the image: '" << filename << "'" << endl;
@@ -39,10 +41,10 @@ bool ImageManipulation::setImageDest(string filename) {
 
 
 void ImageManipulation::displayImage(string title) {
-    namedWindow(title, CV_WINDOW_AUTOSIZE); // Create a window
+    cv::namedWindow(title, CV_WINDOW_AUTOSIZE); // Create a window
     imshow(title, _imageSrc); // Show our image inside the created window.
-    waitKey(0); // Wait for any keystroke in the window
-    destroyWindow(title); //destroy the created window
+    cv::waitKey(0); // Wait for any keystroke in the window
+    cv::destroyWindow(title); //destroy the created window
 }
 
 void ImageManipulation::backupSrcImage() {
@@ -94,25 +96,25 @@ void ImageManipulation::setAlpha(float percent) {
     _alphaDen = 100.0;
 }
 
-string ImageManipulation::getImageType(const Mat &img) {
+string ImageManipulation::getImageType(const cv::Mat &img) {
     return typeToString(img.type());
 }
 
 /** Convert to 4 Channels in RGBA order */
-void ImageManipulation::convertToTPFormat(Mat *img) {
-    Mat converted;
+void ImageManipulation::convertToTPFormat(cv::Mat *img) {
+    cv::Mat converted;
 
     // Add a channel
-    cvtColor(*img, converted, COLOR_RGB2RGBA, 4);
+    cvtColor(*img, converted, cv::COLOR_RGB2RGBA, 4);
     // Convert from 8UC4 to 32S(int)C4
     //converted.convertTo(converted, IMAGE_FORMAT);
     converted.convertTo(converted, IMAGE_FORMAT, SCALE/*scale*/, 0./*shift*/);
 
     img->release();
-    *img = Mat(converted);
+    *img = cv::Mat(converted);
 }
 
-void ImageManipulation::displayMinMax(const Mat &img) {
+void ImageManipulation::displayMinMax(const cv::Mat &img) {
     double minVal, maxVal;
     minMaxLoc(img, &minVal, &maxVal);
     cout << "minVal: " << minVal << "   // maxVal: " << maxVal << endl;
