@@ -2,14 +2,15 @@
 #include <string>   // for std::strings
 #include "Matrix.hpp"
 #include <chrono>
+#include <immintrin.h>
 
 #ifdef BENCHMARK_ALLOW
 #include <benchmark/benchmark.h>
 #endif
 
 #ifdef PICOBENCHMARK_ALLOW
-#include <picobench/picobench.hpp>
 #define PICOBENCH_IMPLEMENT_WITH_MAIN
+#include <picobench/picobench.hpp>
 #endif
 
 using namespace std;
@@ -66,11 +67,48 @@ Goal: find the correct for loop to optimize!
 */
 auto multMatrixSSE(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
     return a*b;
- }
+}
+
+/* Computes matrix mult with SSE optimization. Assumes res is zeroed
+Goal: find the correct for loop to optimize!
+*/
+auto multMatrixSSENoTranspose(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
+    Matrix<float, ROWS1, COLS2> output;
+    
+    for (size_t i = 0; i < ROWS1; ++i) {
+        for (size_t k = 0; k < COLS1; ++k) {
+            for (size_t j = 0; j < COLS2; j+=4) {
+                __m128 line1 = _mm_set1_ps(a(i, k));
+                __m128 line2 = _mm_load_ps(b.data() + k*b.width()+j);
+                __m128 previous = _mm_load_ps(output.data() + i*output.width() + j);
+                previous = _mm_add_ps(previous, _mm_mul_ps(line1, line2));
+                _mm_store_ps(output.data() + i*output.width() + j, previous);
+            }
+        }
+    }
+    
+    
+    return output;
+}
 
 /* Computes matrix mult with FMA optimization. Assumes res is zeroed */
-void multMatrixFMA(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
-    // TODO: implement
+Matrix<float, ROWS1, COLS2> multMatrixFMA(Matrix<float, ROWS1, COLS1>& a, Matrix<float, ROWS2, COLS2>& b) {
+    Matrix<float, ROWS1, COLS2> output;
+
+    for (size_t i = 0; i < ROWS1; ++i) {
+        for (size_t k = 0; k < COLS1; ++k) {
+            for (size_t j = 0; j < COLS2; j+=4) {
+                __m128 line1 = _mm_set1_ps(a(i, k));
+                __m128 line2 = _mm_load_ps(b.data() + k*b.width()+j);
+                __m128 previous = _mm_load_ps(output.data() + i*output.width() + j);
+                previous = _mm_fmadd_ps(line1, line2, previous);
+                _mm_store_ps(output.data() + i*output.width() + j, previous);
+            }
+        }
+    }
+
+
+    return output;
 }
 
 #ifdef BENCHMARK_ALLOW
@@ -94,21 +132,71 @@ static void BM_sse(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
+static void BM_sseNoTranspose(benchmark::State& state) {
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(a, b);
+    for (auto _ : state)
+    {
+        auto res = multMatrixSSENoTranspose(a, b);
+        benchmark::DoNotOptimize(res);
+    }
+}
 static void BM_fma(benchmark::State& state) {
     Matrix<float, ROWS1, COLS1> a;
     Matrix<float, ROWS2, COLS2> b;
     initMatrix(a, b);
     for (auto _ : state)
     {
-        // TODO FMA
-        //auto res = multMatrixFMA(a, b);
-        //benchmark::DoNotOptimize(res);
+        auto res = multMatrixFMA(a, b);
+        benchmark::DoNotOptimize(res);
     }
 }
 BENCHMARK(BM_basic);
 BENCHMARK(BM_sse);
-//BENCHMARK(BM_fma);
+BENCHMARK(BM_sseNoTranspose);
+BENCHMARK(BM_fma);
 #elif defined(PICOBENCHMARK_ALLOW)
+static void BM_basic(picobench::state& state) {
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(a, b);
+    for (auto _ : state)
+    {
+        auto res = multMatrix(a, b);
+    }
+}
+static void BM_sse(picobench::state& state) {
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(a, b);
+    for (auto _ : state)
+    {
+        auto res = multMatrixSSE(a, b);
+    }
+}
+static void BM_sseNoTranspose(picobench::state& state) {
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(a, b);
+    for (auto _ : state)
+    {
+        auto res = multMatrixSSENoTranspose(a, b);
+    }
+}
+static void BM_fma(picobench::state& state) {
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(a, b);
+    for (auto _ : state)
+    {
+        auto res = multMatrixFMA(a, b);
+    }
+}
+PICOBENCH(BM_basic);
+PICOBENCH(BM_sse);
+PICOBENCH(BM_sseNoTranspose);
+PICOBENCH(BM_fma);
 #endif
 
 #ifdef BENCHMARK_ALLOW
@@ -118,29 +206,24 @@ BENCHMARK_MAIN();
 int main()
 {
     // Initialises rand mat1 & mat2
-    Matrix<float, ROWS1, COLS1> a;
-    Matrix<float, ROWS2, COLS2> b;
-    initMatrix(a, b);
+    Matrix<float, ROWS1, COLS1> mat1;
+    Matrix<float, ROWS2, COLS2> mat2;
+    initMatrix(mat1, mat2);
 
     auto time1 = std::chrono::high_resolution_clock::now();
-    auto res = multMatrix(a, b);
+    auto res = mat1 * mat2;
     auto time2 = std::chrono::high_resolution_clock::now();
-    std::cout << "basic " << "(" << (time2 - time1).count() << ")" << std::endl;
+    std::cout << "(" << (time2 - time1).count() << ")" << std::endl;
+    printMatrix("RESU", res);
+    printMatrix("RESU2", multMatrix2(mat1, mat2));
 
-    time1 = std::chrono::high_resolution_clock::now();
-    res = multMatrixSSE(a, b);
-    time2 = std::chrono::high_resolution_clock::now();
-    std::cout << "SSE " << "(" << (time2 - time1).count() << ")" << std::endl;
-    /* TODO FMA
-    time1 = std::chrono::high_resolution_clock::now();
-    res = multMatrixFMA(a, b);
-    time2 = std::chrono::high_resolution_clock::now();
-    std::cout << "FMA " << "(" << (time2 - time1).count() << ")" << std::endl;
-    */
+    auto r = multMatrixSSENoTranspose(mat1, mat2);
+    printMatrix("RESU SSE", r);
+    
     // print initial matrices
     //printMatrix("MAT1", mat1);
     //printMatrix("MAT2", mat2);
-    printMatrix("RESU", res);
+    //printMatrix("RESU", res);
 
   return 0;
 }
