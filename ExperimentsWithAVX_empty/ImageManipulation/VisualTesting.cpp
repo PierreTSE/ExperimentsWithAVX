@@ -4,11 +4,12 @@
 #include <benchmark/benchmark.h>
 #endif
 
+const std::string srcImage  = "../big_image1.jpg";
+const std::string destImage = "../big_image2.jpg";  /* MUST BE OF THE SAME SIZE!!!!*/
+
 #ifdef PICOBENCHMARK_ALLOW
 #define PICOBENCH_IMPLEMENT_WITH_MAIN
 #include <picobench/picobench.hpp>
-const std::string srcImage  = "../big_image1.jpg";
-const std::string destImage = "../big_image2.jpg";  /* MUST BE OF THE SAME SIZE!!!!*/
 static MyImageManipulation manip(srcImage, destImage);
 static void fillWithZero(picobench::state& state) {
     manip.recoverSrcImage();
@@ -49,6 +50,41 @@ PICOBENCH(fillWithZeroSSE);
 PICOBENCH(fillWithZeroAVX);
 #endif
 
+#ifdef BENCHMARK_ALLOW
+static MyImageManipulation manip(srcImage, destImage);
+static void fillWithZero(picobench::state& state) {
+    manip.recoverSrcImage();
+    for (auto _ : state)
+    {
+        manip.fillWithZero();
+    }
+}
+static void fillWithZeroOptimized(benchmark::State& state) {
+    manip.recoverSrcImage();
+    for (auto _ : state)
+    {
+        manip.fillWithZeroOptimized();
+    }
+}
+static void fillWithZeroSSE(benchmark::State& state) {
+    manip.recoverSrcImage();
+    for (auto _ : state)
+    {
+        manip.fillWithZeroSSE();
+    }
+}
+static void fillWithZeroAVX(benchmark::State& state) {
+    manip.recoverSrcImage();
+    for (auto _ : state)
+    {
+        manip.fillWithZeroAVX();
+    }
+}
+BENCHMARK(fillWithZero);
+BENCHMARK(fillWithZeroOptimized);
+BENCHMARK(fillWithZeroSSE);
+BENCHMARK(fillWithZeroAVX);
+#endif
 
 #ifdef PICOBENCHMARK_ALLOW
 #elif defined(BENCHMARK_ALLOW)
@@ -56,9 +92,6 @@ BENCHMARK_MAIN();
 #else
 int main(int argc, char** argv)
 {
-    std::string srcImage  = "../big_image1.jpg";
-    std::string destImage = "../big_image2.jpg";  /* MUST BE OF THE SAME SIZE!!!!*/
-
 	MyImageManipulation manip;
 
     bool ok = manip.setImageSrc(srcImage);
