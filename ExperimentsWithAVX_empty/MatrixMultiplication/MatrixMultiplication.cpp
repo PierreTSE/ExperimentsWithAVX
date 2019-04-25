@@ -7,6 +7,11 @@
 #include <benchmark/benchmark.h>
 #endif
 
+#ifdef PICOBENCHMARK_ALLOW
+#include <picobench/picobench.hpp>
+#define PICOBENCH_IMPLEMENT_WITH_MAIN
+#endif
+
 using namespace std;
 
 constexpr int ROWS1 = 12;
@@ -95,6 +100,7 @@ static void BM_fma(benchmark::State& state) {
     initMatrix(a, b);
     for (auto _ : state)
     {
+        // TODO FMA
         //auto res = multMatrixFMA(a, b);
         //benchmark::DoNotOptimize(res);
     }
@@ -102,21 +108,35 @@ static void BM_fma(benchmark::State& state) {
 BENCHMARK(BM_basic);
 BENCHMARK(BM_sse);
 //BENCHMARK(BM_fma);
+#elif defined(PICOBENCHMARK_ALLOW)
 #endif
 
-#ifndef BENCHMARK_ALLOW
+#ifdef BENCHMARK_ALLOW
+BENCHMARK_MAIN();
+#elif defined(PICOBENCHMARK_ALLOW)
+#else
 int main()
 {
     // Initialises rand mat1 & mat2
-    Matrix<float, ROWS1, COLS1> mat1;
-    Matrix<float, ROWS2, COLS2> mat2;
-    initMatrix(mat1, mat2);
+    Matrix<float, ROWS1, COLS1> a;
+    Matrix<float, ROWS2, COLS2> b;
+    initMatrix(a, b);
 
     auto time1 = std::chrono::high_resolution_clock::now();
-    auto res = mat1 * mat2;
+    auto res = multMatrix(a, b);
     auto time2 = std::chrono::high_resolution_clock::now();
-    std::cout << "(" << (time2 - time1).count() << ")" << std::endl;
+    std::cout << "basic " << "(" << (time2 - time1).count() << ")" << std::endl;
 
+    time1 = std::chrono::high_resolution_clock::now();
+    res = multMatrixSSE(a, b);
+    time2 = std::chrono::high_resolution_clock::now();
+    std::cout << "SSE " << "(" << (time2 - time1).count() << ")" << std::endl;
+    /* TODO FMA
+    time1 = std::chrono::high_resolution_clock::now();
+    res = multMatrixFMA(a, b);
+    time2 = std::chrono::high_resolution_clock::now();
+    std::cout << "FMA " << "(" << (time2 - time1).count() << ")" << std::endl;
+    */
     // print initial matrices
     //printMatrix("MAT1", mat1);
     //printMatrix("MAT2", mat2);
@@ -124,6 +144,4 @@ int main()
 
   return 0;
 }
-#else
-BENCHMARK_MAIN();
 #endif
